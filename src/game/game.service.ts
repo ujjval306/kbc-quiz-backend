@@ -7,6 +7,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Question } from './question.schema';
 import { Player } from '../players/player.schema';
+import { Cron, CronExpression, Interval } from '@nestjs/schedule';
 
 @Injectable()
 export class GameService {
@@ -25,9 +26,21 @@ export class GameService {
   ): Promise<Omit<Question, 'correctAnswer'>> {
     const player = await this.playerModel.findById(playerId);
     if (!player) throw new NotFoundException('Player not found');
+    if (player.status === 'forfeited')
+      throw new BadRequestException(
+        'This game has been forfeited. You cannot continue.',
+      );
+
     const questions = await this.questionModel.find();
-    const question = questions[Math.floor(Math.random() * questions.length)];
-    const { ...questionWithoutAnswer } = question.toObject();
+    const unAnsweredQuestion = questions.filter(
+      (q: any) => !player.answeredQuestions.includes(q._id),
+    );
+
+    const question =
+      unAnsweredQuestion[Math.floor(Math.random() * unAnsweredQuestion.length)];
+    const { correctAnswer, ...questionWithoutAnswer } = question.toObject();
+    console.log('correctAnswer: ', correctAnswer);
+
     return questionWithoutAnswer;
   }
 
@@ -41,6 +54,10 @@ export class GameService {
 
     const player = await this.playerModel.findById(playerId);
     if (!player) throw new NotFoundException('Player not found');
+    if (player.status === 'forfeited')
+      throw new BadRequestException(
+        'This game has been forfeited. You cannot continue.',
+      );
 
     const correct = question.correctAnswer === answer;
 
@@ -55,7 +72,7 @@ export class GameService {
       player.prizeMoney = this.calculatePrizeMoney(player.currentLevel);
 
       if (player.currentLevel >= 9) {
-        player.status = 'Won';
+        player.status = 'completed';
       }
     } else {
       player.status = 'lost';
@@ -92,6 +109,10 @@ export class GameService {
   ): Promise<any> {
     const player = await this.playerModel.findById(playerId);
     if (!player) throw new NotFoundException('Player not found');
+    if (player.status === 'forfeited')
+      throw new BadRequestException(
+        'This game has been forfeited. You cannot continue.',
+      );
 
     if (player.lifelines <= 0) {
       throw new Error('No lifelines left');
@@ -130,6 +151,10 @@ export class GameService {
   async quitGame(playerId: string): Promise<Player> {
     const player = await this.playerModel.findById(playerId);
     if (!player) throw new NotFoundException('Player not found');
+    if (player.status === 'forfeited')
+      throw new BadRequestException(
+        'This game has been forfeited. You cannot continue.',
+      );
 
     if (player.currentLevel < 4) {
       throw new BadRequestException(
@@ -144,5 +169,21 @@ export class GameService {
 
   async getAllPlayers(): Promise<Player[]> {
     return this.playerModel.find();
+  }
+
+  @Interval(30000)
+  @Cron(CronExpression.EVERY_30_SECONDS)
+  async forFeitIncompleteGames(): Promise<void> {
+    const threshold = new Date(Date.now() - 30 * 1000);
+    const incompleteGames = await this.playerModel.find({
+      status: 'in-progress',
+      startTime: { $lt: threshold },
+    });
+
+    for (const game of incompleteGames) {
+      game.status = 'forfeited';
+      game.prizeMoney = 0;
+      await game.save();
+    }
   }
 }

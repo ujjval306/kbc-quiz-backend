@@ -12,7 +12,7 @@ export class Player extends Document {
   @Prop({ default: 0 })
   currentLevel: number;
 
-  @Prop({ default: 'active' })
+  @Prop({ default: 'in-progress' })
   status: string;
 
   @Prop({ type: Date, default: Date.now })

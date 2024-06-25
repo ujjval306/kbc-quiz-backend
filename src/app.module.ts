@@ -9,7 +9,5 @@ import { GameModule } from './game/game.module';
     GameModule,
     PlayersModule,
   ],
-  // controllers: [AppController],
-  // providers: [AppService],
 })
 export class AppModule {}

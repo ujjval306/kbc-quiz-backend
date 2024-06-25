@@ -1,5 +1,3 @@
-// src/game/game.service.ts
-
 import {
   BadRequestException,
   Injectable,
@@ -22,19 +20,22 @@ export class GameService {
     return player.save();
   }
 
-  async fetchQuestion(playerId: string): Promise<Question> {
+  async fetchQuestion(
+    playerId: string,
+  ): Promise<Omit<Question, 'correctAnswer'>> {
     const player = await this.playerModel.findById(playerId);
     if (!player) throw new NotFoundException('Player not found');
     const questions = await this.questionModel.find();
     const question = questions[Math.floor(Math.random() * questions.length)];
-    return question;
+    const { ...questionWithoutAnswer } = question.toObject();
+    return questionWithoutAnswer;
   }
 
   async submitAnswer(
     playerId: string,
     questionId: string,
     answer: string,
-  ): Promise<{ correct: boolean; player: Player }> {
+  ): Promise<{ correct: boolean; player: Player; correctAnswer: string }> {
     const question = await this.questionModel.findById(questionId);
     if (!question) throw new NotFoundException('Question not found');
 
@@ -43,9 +44,19 @@ export class GameService {
 
     const correct = question.correctAnswer === answer;
 
+    if (player.answeredQuestions.includes(questionId)) {
+      throw new BadRequestException('Question has already been answered');
+    }
+
+    const correctAnswer = question.correctAnswer;
+
     if (correct) {
       player.currentLevel++;
       player.prizeMoney = this.calculatePrizeMoney(player.currentLevel);
+
+      if (player.currentLevel >= 9) {
+        player.status = 'Won';
+      }
     } else {
       player.status = 'lost';
       if (player.currentLevel < 4) {
@@ -56,9 +67,10 @@ export class GameService {
         );
       }
     }
+    player.answeredQuestions.push(questionId);
 
     await player.save();
-    return { correct, player };
+    return { correct, player, correctAnswer };
   }
 
   calculatePrizeMoney(level: number): number {

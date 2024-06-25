@@ -1,5 +1,3 @@
-// src/players/player.schema.ts
-
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
@@ -22,6 +20,9 @@ export class Player extends Document {
 
   @Prop({ default: 2 })
   lifelines: number;
+
+  @Prop({ type: [String], default: [] })
+  answeredQuestions: string[];
 }
 
 export const PlayerSchema = SchemaFactory.createForClass(Player);

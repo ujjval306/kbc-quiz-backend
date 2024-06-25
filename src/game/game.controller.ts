@@ -1,5 +1,3 @@
-// src/game/game.controller.ts
-
 import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import {
   ApiTags,
@@ -10,8 +8,6 @@ import {
 } from '@nestjs/swagger';
 import { GameService } from './game.service';
 import { Player } from '../players/player.schema';
-import { Question } from './question.schema';
-
 @ApiTags('game')
 @Controller('game')
 export class GameController {
@@ -37,7 +33,7 @@ export class GameController {
   @Get('question/:playerId')
   @ApiOperation({ summary: 'Fetch a question for the player' })
   @ApiParam({ name: 'playerId', required: true, description: 'Player ID' })
-  async fetchQuestion(@Param('playerId') playerId: string): Promise<Question> {
+  async fetchQuestion(@Param('playerId') playerId: string) {
     return this.gameService.fetchQuestion(playerId);
   }
 

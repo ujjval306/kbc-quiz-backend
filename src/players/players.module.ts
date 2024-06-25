@@ -1,5 +1,3 @@
-// src/players/players.module.ts
-
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PlayersService } from './players.service';

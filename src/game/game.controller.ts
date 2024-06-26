@@ -59,7 +59,11 @@ export class GameController {
   @ApiOperation({ summary: 'Use a lifeline' })
   @ApiBody({
     schema: {
-      example: { playerId: 'playerId', lifeline: '50-50', questionId: '' },
+      example: {
+        playerId: 'playerId',
+        lifeline: '50-50/AskTheAI',
+        questionId: '',
+      },
     },
   })
   async useLifeline(

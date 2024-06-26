@@ -23,6 +23,9 @@ export class Player extends Document {
 
   @Prop({ type: [String], default: [] })
   answeredQuestions: string[];
+
+  @Prop({ type: Date, default: new Date() })
+  lastQuestionTime: Date;
 }
 
 export const PlayerSchema = SchemaFactory.createForClass(Player);

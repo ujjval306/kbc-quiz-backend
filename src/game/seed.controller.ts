@@ -1,5 +1,3 @@
-// src/game/seed.controller.ts
-
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { SeedService } from './seed.service';

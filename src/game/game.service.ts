@@ -17,7 +17,9 @@ export class GameService {
   ) {}
 
   async startNewGame(displayName: string): Promise<Player> {
-    const player = new this.playerModel({ displayName });
+    const player = new this.playerModel({
+      displayName,
+    });
     return player.save();
   }
 
@@ -35,6 +37,9 @@ export class GameService {
     const unAnsweredQuestion = questions.filter(
       (q: any) => !player.answeredQuestions.includes(q._id),
     );
+
+    player.lastQuestionTime = new Date();
+    await player.save();
 
     const question =
       unAnsweredQuestion[Math.floor(Math.random() * unAnsweredQuestion.length)];
